@@ -8,7 +8,12 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient("BuildManagerAPI", client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5216");
+    client.BaseAddress = new Uri("http://localhost:5216/");
+});
+
+builder.Services.AddScoped(sp => {
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    return factory.CreateClient("BuildManagerAPI");
 });
 var app = builder.Build();
 

@@ -1,0 +1,93 @@
+﻿@page "/projects"
+@using BuildManager.core.Models
+@inject HttpClient Http
+
+<h3>Projects page</h3>
+
+<p>Welcome to build manager projects</p>
+
+@if(projects==null)
+{
+	<p><em>Loading Projects</em></p>
+}
+else if(!projects.Any())
+{
+	<p>No projects available</p>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+				<th>Repository</th>
+				<th>Branch</th>
+				<th>Environment</th>
+				<th>Created</th>
+
+			</tr>
+		</thead>
+		<tbody>
+			@foreach(var p in projects)
+			{
+				<tr>
+					<td>@p.Id</td>
+					<td>@p.Name</td>
+					<td>@p.RepositoryUrl</td>
+					<td>@p.Branch</td>
+					<td>@p.Environment</td>
+					<td>@p.CreatedDate</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+
+<h4>Add new Project</h4>
+<div class="mb-3">
+	<label>Name:</label>
+	<input @bind="newProject.Name" class="form-control" />
+</div>
+<div class="mb-3">
+</div>
+<button type="button" class="btn btn-primary" @onclick="AddProject">Add Project</button>
+
+
+@code{
+	private List<Project>? projects;
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			projects = await Http.GetFromJsonAsync<List<Project>>("api/projects");
+		}
+		catch(Exception ex)
+		{
+			Console.WriteLine($"Error fetching projects: {ex.Message}");
+			projects = new List<Project>();
+		}
+	}
+	private Project newProject = new();
+	private string debugMessage = string.Empty;
+
+	private async Task AddProject()
+	{
+		debugMessage = $"Clicked at {DateTime.Now}, Name={newProject.Name}";
+		Console.WriteLine(debugMessage);
+
+		var response = await Http.PostAsJsonAsync("api/projects", newProject);
+		if (response.IsSuccessStatusCode)
+		{
+			var added = await response.Content.ReadFromJsonAsync<Project>();
+			projects?.Add(added!);
+			newProject = new();
+		}
+		else
+		{
+			debugMessage = $"Add failed: {response.StatusCode}";
+		}
+	}
+
+}
